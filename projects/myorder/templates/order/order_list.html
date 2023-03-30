@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>[주문 내역]</title>
+  </head>
+  <body>
+    <h1>주문 내역</h1>
+    <table border="1">
+      <tr>
+        <th colspan="6">
+          <input type="text" />
+          <input type="submit" value="검색" />
+        </th>
+      </tr>
+      <tr>
+        <th>주문 번호</th>
+        <th>주문 시간</th>
+        <th>주문 내역</th>
+        <th>주문 가격</th>
+        <th>주문 주소</th>
+        <th>수정 / 삭제</th>
+      </tr>
+      {% for order in order_list %}
+      <tr>
+        <th>{{ order.id }}</th>
+        <td>{{ order.order_time }}</td>
+        <td>{{ order.order_text }}</td>
+        <td>{{ order.price }}</td>
+        <td>{{ order.address }}</td>
+        <td>
+          <a href="../{{order.id}}/update_order/">수정</a> /
+          <a href="../{{order.id}}/delete_order/">삭제</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>

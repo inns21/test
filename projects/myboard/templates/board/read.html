@@ -1,0 +1,144 @@
+{# common/base.html을 상속받겠음 #}
+{% extends 'common/base.html' %}
+{% block title %}[게시판]{% endblock title%}
+{% block body %}
+<script>
+  function showUpdateForm(param){
+    // .../board/0/update_reply?rid=0
+    location.href= 'update_reply?rid=' + param;
+  }
+
+  $(document).ready(function(){
+    // console.log('여기는 read');
+    loadReplyList();
+  });
+
+  function update_ajax(param){
+    console.log(param)
+    $.ajax({
+      url: 'update_reply/',
+      type: 'get',
+      headers:{'X-CSRFTOKEN': '{{ csrf_token }}'},
+      data:{'rid':param},
+      success: function(context){
+        alert(context.reply);
+        alert('됨?')
+      }
+    })
+  }
+
+  function delete_ajax(param){
+    let id = '{{board.id}}'
+    console.log(id)
+    let rid = param
+    console.log(rid)
+    $.ajax({
+      url: 'delete_reply/' + param+'/',
+      type: 'post',
+      headers:{'X-CSRFTOKEN': '{{ csrf_token }}'},
+      success: function(result){
+        loadReplyList();
+      }
+    })
+  }
+
+  function loadReplyList(){
+    // console.log('여기는 loadReplyList')
+    let bNum = '{{ board.id }}';
+    console.log(bNum);
+    $.ajax({
+      url:'/board/load_reply/',
+      type:'post',
+      headers:{'X-CSRFTOKEN': '{{ csrf_token }}'},
+      data:{'id': bNum},
+      success: function(response){
+        // console.log(response);
+        console.log(JSON.parse(response['response']));
+
+        let replyList = JSON.parse(response['response']);
+        
+        let str = '';
+        $.each(replyList, function(i, item){
+          let replyContent = item.fields.reply_content;
+          let replyUser = item.fields.user.username;
+          // 바로 화면에 붙이려면 append
+          // $('#replyList').append(replyContent + '<br>');
+
+          str += replyContent;
+          str += " <input type='button' value='댓글 수정' onclick='javascript:update_ajax(\"" + item.pk + "\")'>";
+          str += " <input type='button' value='댓글 삭제' onclick='javascript:delete_ajax(\"" + item.pk + "\")'>";
+          str += '<br>';
+          str += '<br>';
+          
+        })
+        // html을 만들어서 한 번에 넣으려면 html
+        $('#replyList').html(str);
+
+      }
+    });
+  }
+</script>
+<h1>글 보기</h1>
+<table>
+  <tr>
+    <th>{{ board.id }}</th>
+    <th>{{ board.title }}</th>
+    <td>{{ board.view_count }}</td>
+  </tr>
+  <tr>
+    <td colspan="2">{{ board.input_date|date:'y.m.d H:i' }}</td>
+    <td>{{ board.writer }}</td>
+  </tr>
+  <tr>
+    <td colspan="4">{{ board.content }}</td>
+  </tr>
+</table>
+<!-- 수정/삭제 -->
+<!-- username끼리 비교 -->
+{% if board.author.username == user.username %}
+  <a href="{% url 'board:update' board.id %}">글수정</a> /
+  <a href="{% url 'board:delete' board.id %}">글삭제</a>
+{% endif %}
+<!-- board.author 는 user하고 비교ㅏ -->
+<div id="replyArea">
+  <!-- 댓글 목록 표시 -->
+  <div id="replyList" >
+    <!-- board객체 뿐 아니라 board와 fk로 엮인 객체는 -->
+    <!-- board.모델이름_set으로 가져올 수 있다 -->
+    <!-- {% if board.reply_set %}
+      {% for reply in board.reply_set.all %} 
+        {{ reply }}&nbsp;&nbsp;&nbsp;
+        <a href="#" onclick="showUpdateForm('{{reply.id}}')">수정</a>/
+        <a href="{% url 'board:delete_reply' id=board.id rid=reply.id %}">삭제</a>
+        <br>
+      {% endfor %}
+    {% else %}
+      <p>등록된 댓글이 없습니다</p>
+    {% endif %} -->
+    <br>
+    <br>
+
+  </div>
+  <!-- 댓글 입력 폼-->
+  <div id="replyForm">
+    {% if not update %} <!-- context에 update에 대한 값을 찾지 못했을 때 -->
+      <form action="{% url 'board:write_reply' board.id %}" method="post">
+        {% csrf_token %}
+        <textarea name="replyText"></textarea>
+        <input type="submit" value="댓글쓰기">
+      </form>
+    {% else %} <!-- context에 update가 있을 떄-->
+      <form action="{% url 'board:update_reply' board.id %}" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="rid" value="{{ reply.id }}">
+        <textarea name="replyText">{{ reply.reply_content }}</textarea>
+        <input type="submit" value="댓글수정">
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<form action="{% url 'board:index' %}">
+  <input type="submit" value="목록으로" />
+</form>
+{% endblock body %}
